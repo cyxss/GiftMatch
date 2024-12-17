@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Exchange Matcher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        p {
+            margin: 5px 0 15px;
+            font-size: 1.1em;
+        }
+        input {
+            padding: 8px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 8px 12px;
+            font-size: 1em;
+            border: none;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            font-size: 1.2em;
+            margin-top: 15px;
+            color: #007BFF;
+        }
+        .error {
+            color: #FF5733;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>候选人抽取程序</h1>
+        <p>请输入您的名字进行抽取：</p>
+        <div>
+            <input type="text" id="userNameInput" placeholder="您的名字">
+            <button onclick="drawGift()">抽取</button>
+            <button onclick="adminDownload()">下载记录</button>
+        </div>
+        <h2>抽取结果:</h2>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbx9v4-nVzD5nmSer4eZv0VUgTcOZwo2eXrTc2M8ga1cHPM7r2CfOYvLcoQl29Mi55Qw/exec"; // 替换为你的后端 URL
+
+        async function drawGift() {
+            const userName = document.getElementById('userNameInput').value.trim();
+            const resultDisplay = document.getElementById('result');
+            const validNames = ["彭才栩", "蒋思旖", "夏璟", "陈佳汐", "陈婧", "金丽绮", "刘美诚"];
+
+            if (!userName || !validNames.includes(userName)) {
+                resultDisplay.className = 'error';
+                resultDisplay.textContent = "错误: 请输入有效的名字！";
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}?user=${encodeURIComponent(userName)}`, {
+                    method: "GET"
+                });
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    resultDisplay.className = '';
+                    resultDisplay.textContent = `${userName} 抽取到了: ${data.recipient}`;
+                } else {
+                    resultDisplay.className = 'error';
+                    resultDisplay.textContent = `错误: ${data.message}`;
+                }
+            } catch (error) {
+                resultDisplay.className = 'error';
+                resultDisplay.textContent = "错误: 无法连接到服务器，请稍后再试！";
+            }
+        }
+
+        async function adminDownload() {
+            const userName = document.getElementById('userNameInput').value.trim();
+            const resultDisplay = document.getElementById('result');
+
+            if (userName !== 'CYXss') {
+                resultDisplay.className = 'error';
+                resultDisplay.textContent = `错误: 只有 Admin 可以下载记录！`;
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}?download=true`, { method: "GET" });
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    const blob = new Blob([JSON.stringify(data.records, null, 2)], { type: 'application/json' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'gift_exchange_history.json';
+                    link.click();
+                } else {
+                    resultDisplay.className = 'error';
+                    resultDisplay.textContent = `错误: ${data.message}`;
+                }
+            } catch (error) {
+                resultDisplay.className = 'error';
+                resultDisplay.textContent = "错误: 无法下载记录，请稍后再试！";
+            }
+        }
+    </script>
+</body>
+</html>
